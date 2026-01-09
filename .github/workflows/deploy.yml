@@ -3,7 +3,7 @@ name: Build and Deploy Vue App
 on:
   push:
     branches:
-      - master
+      - master # or main, depending on your default branch
 
 permissions:
   contents: write
@@ -13,49 +13,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout the repo
       - uses: actions/checkout@v4
 
+      # 2️⃣ Setup Node.js
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
           cache: npm
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm ci
 
+      # 4️⃣ Build production
       - name: Build production
         run: npm run build
 
-      - name: Verify build output
+      # 5️⃣ SPA & GitHub Pages adjustments
+      - name: Prepare SPA for GitHub Pages
         run: |
-          echo "=== Current directory structure ==="
-          pwd
-          ls -la
-          echo ""
-          echo "=== dist directory structure ==="
-          ls -la dist/
-          echo ""
-          echo "=== Checking index.html ==="
-          cat dist/index.html
-          echo ""
-          echo "=== Checking if assets exist ==="
-          ls -la dist/assets/ || echo "No assets directory"
-
-      - name: Create SPA files
-        run: |
-          # Copy index.html to 404.html for GitHub Pages SPA support
+          # Copy index.html to 404.html for SPA fallback
           cp dist/index.html dist/404.html
-          # Create .nojekyll to disable Jekyll processing
+          # Disable Jekyll
           touch dist/.nojekyll
-          # Create a simple test file to verify deployment
-          echo '<!DOCTYPE html><html><body><h1>Test File</h1><p>If you see this, GitHub Pages is working.</p></body></html>' > dist/test.html
 
+      # 6️⃣ Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: dist
           publish_branch: gh-pages
-          force_orphan: false
+          force_orphan: true
           keep_files: false
