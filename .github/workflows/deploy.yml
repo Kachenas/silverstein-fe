@@ -1,0 +1,61 @@
+name: Build and Deploy Vue App
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production
+        run: npm run build-only
+
+      - name: Verify build output
+        run: |
+          echo "=== Current directory structure ==="
+          pwd
+          ls -la
+          echo ""
+          echo "=== dist directory structure ==="
+          ls -la dist/
+          echo ""
+          echo "=== Checking index.html ==="
+          cat dist/index.html
+          echo ""
+          echo "=== Checking if assets exist ==="
+          ls -la dist/assets/ || echo "No assets directory"
+
+      - name: Create SPA files
+        run: |
+          # Copy index.html to 404.html for GitHub Pages SPA support
+          cp dist/index.html dist/404.html
+          # Create .nojekyll to disable Jekyll processing
+          touch dist/.nojekyll
+          # Create a simple test file to verify deployment
+          echo '<!DOCTYPE html><html><body><h1>Test File</h1><p>If you see this, GitHub Pages is working.</p></body></html>' > dist/test.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist
+          publish_branch: gh-pages
+          force_orphan: false
+          keep_files: false
