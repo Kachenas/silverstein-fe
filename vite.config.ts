@@ -3,7 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import path from "path";
 
 export default defineConfig({
-  base: "/", // important for GitHub Pages
+  base: "/silverstein-fe/", // important for GitHub Pages
   plugins: [vue()],
   resolve: {
     alias: {
